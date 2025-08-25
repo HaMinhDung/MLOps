@@ -1,0 +1,29 @@
+services:
+  iris-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./mlruns:/app/mlruns
+    environment:
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mlflow:
+    image: python:3.11-slim
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/app/mlruns
+    working_dir: /app
+    command: >
+      bash -c "pip install mlflow==2.8.1 && 
+               mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri file:///app/mlruns"
+    restart: unless-stopped
